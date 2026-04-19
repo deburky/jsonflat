@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "jsonflat"
+version = "0.1.0"
+description = "Flatten nested JSON into DataFrames with controlled depth."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+
+[project.optional-dependencies]
+dataframe = ["pandas"]
+s3 = ["boto3", "orjson"]
+sqs = ["boto3"]
+dynamodb = ["boto3"]
+cloudwatch = ["boto3"]
+eventbridge = ["boto3"]
+stepfunctions = ["boto3"]
+s3-async = ["aioboto3", "orjson"]
+sklearn = ["pandas", "scikit-learn"]
+
+[project.scripts]
+jsonflat = "jsonflat.__main__:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
