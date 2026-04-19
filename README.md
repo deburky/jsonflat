@@ -1,7 +1,7 @@
 # jsonflat
 
 <p align="center">
-  <img src="ims/jsonflat.png" alt="jsonflat" width="600">
+  <img src="ims/jsonflat.png" alt="jsonflat" width="900">
 </p>
 
 Flatten nested JSON into DataFrames with controlled depth.
