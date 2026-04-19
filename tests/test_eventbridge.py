@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.eventbridge import flatten_event, read_events
+from jsonflat.integrations.aws.eventbridge import flatten_event, read_events
 
 EB_EVENT = {
     "version": "0",
@@ -67,7 +67,7 @@ def _setup_mocks(mock_boto3, messages, empty_after=True):
 
 
 class TestReadEvents:
-    @patch("jsonflat.integrations.eventbridge.boto3")
+    @patch("jsonflat.integrations.aws.eventbridge.boto3")
     def test_basic_read(self, mock_boto3):
         _setup_mocks(mock_boto3, SQS_MESSAGES)
 
@@ -78,7 +78,7 @@ class TestReadEvents:
         assert "detail__order_id" in df.columns
         assert "_message_id" in df.columns
 
-    @patch("jsonflat.integrations.eventbridge.boto3")
+    @patch("jsonflat.integrations.aws.eventbridge.boto3")
     def test_delete_called(self, mock_boto3):
         sqs = _setup_mocks(mock_boto3, SQS_MESSAGES)
 
@@ -86,7 +86,7 @@ class TestReadEvents:
 
         sqs.delete_message_batch.assert_called_once()
 
-    @patch("jsonflat.integrations.eventbridge.boto3")
+    @patch("jsonflat.integrations.aws.eventbridge.boto3")
     def test_no_delete(self, mock_boto3):
         sqs = _setup_mocks(mock_boto3, SQS_MESSAGES)
 
@@ -94,7 +94,7 @@ class TestReadEvents:
 
         sqs.delete_message_batch.assert_not_called()
 
-    @patch("jsonflat.integrations.eventbridge.boto3")
+    @patch("jsonflat.integrations.aws.eventbridge.boto3")
     def test_filter_fn(self, mock_boto3):
         _setup_mocks(mock_boto3, SQS_MESSAGES)
 
@@ -105,7 +105,7 @@ class TestReadEvents:
 
         assert len(df) == 1
 
-    @patch("jsonflat.integrations.eventbridge.boto3")
+    @patch("jsonflat.integrations.aws.eventbridge.boto3")
     def test_empty_queue(self, mock_boto3):
         _setup_mocks(mock_boto3, [], empty_after=False)
 

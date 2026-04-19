@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from jsonflat.integrations.bedrock import (
+from jsonflat.integrations.aws.bedrock import (
     flatten_conversations,
     flatten_response,
     read_bedrock_history,

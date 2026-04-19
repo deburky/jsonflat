@@ -2,7 +2,7 @@
 SQS integration for jsonflat -- consume JSON messages and flatten into DataFrames.
 
 Usage:
-    from jsonflat.integrations.sqs import read_sqs
+    from jsonflat.aws.sqs import read_sqs
 
     # Poll and flatten up to 100 messages
     df = read_sqs(
@@ -12,7 +12,7 @@ Usage:
     )
 
     # Stream as batches
-    from jsonflat.integrations.sqs import stream_sqs
+    from jsonflat.aws.sqs import stream_sqs
 
     for df_batch in stream_sqs(
         queue_url="https://sqs.us-east-1.amazonaws.com/123/my-queue",

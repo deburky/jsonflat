@@ -6,7 +6,7 @@ import orjson
 import pandas as pd
 import pytest
 
-from jsonflat.integrations.s3 import read_s3_async
+from jsonflat.integrations.aws.s3 import read_s3_async
 
 
 # ---------------------------------------------------------------------------
@@ -85,7 +85,7 @@ RECORDS = [
 # ---------------------------------------------------------------------------
 class TestReadS3Async:
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_basic_read(self, mock_aioboto3):
         keys = ["data/1.json", "data/2.json", "data/3.json"]
         responses = [{"Body": _make_s3_body(r)} for r in RECORDS]
@@ -107,7 +107,7 @@ class TestReadS3Async:
         assert "_source_file" in df.columns
 
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_batching(self, mock_aioboto3):
         keys = [f"data/{i}.json" for i in range(5)]
         responses = [{"Body": _make_s3_body({"id": i})} for i in range(5)]
@@ -127,7 +127,7 @@ class TestReadS3Async:
         assert sizes == [2, 2, 1]
 
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_suffix_filter(self, mock_aioboto3):
         all_keys = ["a.json", "b.csv", "c.json"]
         json_keys = ["a.json", "c.json"]
@@ -149,7 +149,7 @@ class TestReadS3Async:
         assert len(batches[0]) == 2
 
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_filter_fn(self, mock_aioboto3):
         keys = ["1.json", "2.json"]
         responses = [
@@ -176,7 +176,7 @@ class TestReadS3Async:
         assert batches[0].iloc[0]["id"] == 1
 
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_empty_bucket(self, mock_aioboto3):
         def make_client():
             client = _make_s3_client([], [])
@@ -192,7 +192,7 @@ class TestReadS3Async:
         assert batches == []
 
     @pytest.mark.asyncio
-    @patch("jsonflat.integrations.s3.aioboto3")
+    @patch("jsonflat.integrations.aws.s3.aioboto3")
     async def test_fetch_error_skipped(self, mock_aioboto3):
         keys = ["ok.json", "bad.json"]
 

@@ -1,5 +1,9 @@
 # jsonflat
 
+<p align="center">
+  <img src="ims/jsonflat.png" alt="jsonflat" width="600">
+</p>
+
 Flatten nested JSON into DataFrames with controlled depth.
 
 ## Install
@@ -119,7 +123,7 @@ cat data.json | jsonflat --nesting 3
 Read JSON files from S3 in parallel, flatten, return a DataFrame.
 
 ```python
-from jsonflat.integrations.s3 import read_s3
+from jsonflat.aws.s3 import read_s3
 
 df = read_s3(
     bucket="my-bucket",
@@ -131,7 +135,7 @@ df = read_s3(
 
 CLI:
 ```bash
-python -m jsonflat.integrations.s3 \
+python -m jsonflat.integrations.aws.s3 \
     --bucket my-bucket --prefix events/ \
     --max-files 100 --nesting 3 --output result.parquet
 ```
@@ -141,7 +145,7 @@ python -m jsonflat.integrations.s3 \
 Stream JSON files from S3 as DataFrame batches with bounded memory usage.
 
 ```python
-from jsonflat.integrations.s3 import read_s3_async
+from jsonflat.aws.s3 import read_s3_async
 
 async for df_batch in read_s3_async(
     bucket="my-bucket",
@@ -157,7 +161,7 @@ async for df_batch in read_s3_async(
 Consume JSON messages from SQS, flatten, and return a DataFrame.
 
 ```python
-from jsonflat.integrations.sqs import read_sqs, stream_sqs
+from jsonflat.aws.sqs import read_sqs, stream_sqs
 
 # Poll and flatten up to 100 messages
 df = read_sqs(
@@ -180,7 +184,7 @@ for df_batch in stream_sqs(
 Scan a DynamoDB table and consume DynamoDB Streams.
 
 ```python
-from jsonflat.integrations.dynamodb import read_dynamodb, read_stream, stream_records
+from jsonflat.aws.dynamodb import read_dynamodb, read_stream, stream_records
 
 # Scan table
 df = read_dynamodb(table_name="my-table", max_nesting=3)
@@ -198,7 +202,7 @@ for df_batch in stream_records(table_name="my-table", image="both"):
 Flatten Bedrock converse responses and conversation histories.
 
 ```python
-from jsonflat.integrations.bedrock import (
+from jsonflat.aws.bedrock import (
     flatten_response,
     flatten_conversations,
     read_bedrock_history,
@@ -221,7 +225,7 @@ df = read_bedrock_history(conversation_log, role="assistant")
 Read log events, parse JSON, flatten into a DataFrame.
 
 ```python
-from jsonflat.integrations.cloudwatch import read_logs
+from jsonflat.aws.cloudwatch import read_logs
 
 df = read_logs(
     log_group="/aws/lambda/my-function",
@@ -236,7 +240,7 @@ df = read_logs(
 Flatten EventBridge events consumed via an SQS target queue.
 
 ```python
-from jsonflat.integrations.eventbridge import flatten_event, read_events
+from jsonflat.aws.eventbridge import flatten_event, read_events
 
 # Flatten a single event
 flat = flatten_event(event)
@@ -254,7 +258,7 @@ df = read_events(
 Read execution summaries and per-step event history.
 
 ```python
-from jsonflat.integrations.stepfunctions import read_executions, read_execution_history
+from jsonflat.aws.stepfunctions import read_executions, read_execution_history
 
 # All executions with flattened input/output
 df = read_executions(
@@ -272,7 +276,7 @@ df = read_execution_history(execution_arn="arn:aws:states:...:execution:...")
 Use `JsonFlattener` as a preprocessing step in sklearn pipelines.
 
 ```python
-from jsonflat.integrations.sklearn import JsonFlattener
+from jsonflat.sklearn import JsonFlattener
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 
@@ -296,7 +300,7 @@ AWS Lambda handler that flattens JSON from S3 and writes parquet back.
 Supports S3 event triggers and direct invocation.
 
 ```python
-# Entry point: jsonflat.integrations.lambda_handler.handler
+# Entry point: jsonflat.aws.lambda_handler.handler
 
 # Direct invoke:
 import boto3
@@ -350,16 +354,19 @@ jsonflat/
 │   ├── __init__.py              # re-exports flatten, normalize_json, to_dataframe
 │   ├── core.py                  # core functions
 │   ├── __main__.py              # CLI entry point
+│   ├── aws/                     # short import aliases (from jsonflat.aws.s3 import ...)
+│   ├── sklearn.py               # short import alias (from jsonflat.sklearn import ...)
 │   └── integrations/
-│       ├── s3.py                # S3 sync + async reader
-│       ├── sqs.py               # SQS consumer
-│       ├── dynamodb.py          # DynamoDB scan + streams
-│       ├── bedrock.py           # Bedrock conversation flattening
-│       ├── cloudwatch.py        # CloudWatch Logs reader
-│       ├── eventbridge.py       # EventBridge event flattening
-│       ├── stepfunctions.py     # Step Functions execution reader
 │       ├── sklearn.py           # scikit-learn transformer
-│       └── lambda_handler.py    # AWS Lambda handler
+│       └── aws/
+│           ├── s3.py            # S3 sync + async reader
+│           ├── sqs.py           # SQS consumer
+│           ├── dynamodb.py      # DynamoDB scan + streams
+│           ├── bedrock.py       # Bedrock conversation flattening
+│           ├── cloudwatch.py    # CloudWatch Logs reader
+│           ├── eventbridge.py   # EventBridge event flattening
+│           ├── stepfunctions.py # Step Functions execution reader
+│           └── lambda_handler.py # AWS Lambda handler
 └── tests/
     ├── test_jsonflat.py         # 24 core tests
     ├── test_s3.py               # 6 sync S3 tests

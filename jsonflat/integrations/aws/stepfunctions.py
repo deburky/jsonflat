@@ -1,7 +1,7 @@
 """Step Functions integration for jsonflat.
 
 Usage:
-    from jsonflat.integrations.stepfunctions import read_executions
+    from jsonflat.aws.stepfunctions import read_executions
 
     df = read_executions(
         state_machine_arn="arn:aws:states:...:stateMachine:my-machine",

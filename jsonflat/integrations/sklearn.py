@@ -2,7 +2,7 @@
 Scikit-learn compatible transformer for jsonflat.
 
 Usage:
-    from jsonflat.integrations.sklearn import JsonFlattener
+    from jsonflat.sklearn import JsonFlattener
     from sklearn.pipeline import Pipeline
 
     pipe = Pipeline([

@@ -2,13 +2,13 @@
 DynamoDB integration for jsonflat -- scan tables and consume streams.
 
 Usage:
-    from jsonflat.integrations.dynamodb import read_dynamodb
+    from jsonflat.aws.dynamodb import read_dynamodb
 
     # Scan entire table
     df = read_dynamodb(table_name="my-table", max_nesting=3)
 
     # Read stream changes
-    from jsonflat.integrations.dynamodb import read_stream, stream_records
+    from jsonflat.aws.dynamodb import read_stream, stream_records
 
     df = read_stream(table_name="my-table", image="new")
 

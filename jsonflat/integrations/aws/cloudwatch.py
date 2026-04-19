@@ -1,7 +1,7 @@
 """CloudWatch Logs integration for jsonflat.
 
 Usage:
-    from jsonflat.integrations.cloudwatch import read_logs
+    from jsonflat.aws.cloudwatch import read_logs
 
     df = read_logs(
         log_group="/aws/lambda/my-function",

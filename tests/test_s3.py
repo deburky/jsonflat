@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import orjson
 import pandas as pd
 
-from jsonflat.integrations.s3 import read_s3
+from jsonflat.integrations.aws.s3 import read_s3
 
 
 # ---------------------------------------------------------------------------
@@ -32,7 +32,7 @@ RECORDS = [
 # Tests
 # ---------------------------------------------------------------------------
 class TestReadS3:
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_basic_read(self, mock_boto3):
         keys = ["data/1.json", "data/2.json", "data/3.json"]
         s3 = MagicMock()
@@ -51,7 +51,7 @@ class TestReadS3:
         assert "info__name" in df.columns
         assert "_source_file" in df.columns
 
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_max_files_limits_keys(self, mock_boto3):
         keys = [f"data/{i}.json" for i in range(10)]
         s3 = MagicMock()
@@ -66,7 +66,7 @@ class TestReadS3:
         df = read_s3(bucket="b", prefix="data/", max_files=2)
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_suffix_filter(self, mock_boto3):
         keys = ["a.json", "b.csv", "c.json"]
         s3 = MagicMock()
@@ -83,7 +83,7 @@ class TestReadS3:
         assert len(df) == 2
         assert s3.get_object.call_count == 2
 
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_filter_fn(self, mock_boto3):
         keys = ["1.json", "2.json"]
         s3 = MagicMock()
@@ -106,7 +106,7 @@ class TestReadS3:
         assert len(df) == 1
         assert df.iloc[0]["id"] == 1
 
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_fetch_error_skipped(self, mock_boto3):
         keys = ["ok.json", "bad.json"]
         s3 = MagicMock()
@@ -124,7 +124,7 @@ class TestReadS3:
         df = read_s3(bucket="b", prefix="")
         assert len(df) == 1
 
-    @patch("jsonflat.integrations.s3.boto3")
+    @patch("jsonflat.integrations.aws.s3.boto3")
     def test_empty_bucket(self, mock_boto3):
         s3 = MagicMock()
         mock_boto3.Session.return_value.client.return_value = s3

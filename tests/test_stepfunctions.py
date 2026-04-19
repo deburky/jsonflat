@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.stepfunctions import read_execution_history, read_executions
+from jsonflat.integrations.aws.stepfunctions import read_execution_history, read_executions
 
 EXECUTIONS = [
     {
@@ -78,7 +78,7 @@ def _setup_mocks(mock_boto3):
 
 
 class TestReadExecutions:
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_basic_read(self, mock_boto3):
         _setup_mocks(mock_boto3)
 
@@ -92,7 +92,7 @@ class TestReadExecutions:
         assert "input__order_id" in df.columns
         assert "input__customer__name" in df.columns
 
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_output_flattened(self, mock_boto3):
         _setup_mocks(mock_boto3)
 
@@ -104,7 +104,7 @@ class TestReadExecutions:
         assert succeeded["output__result__status"] == "ok"
         assert succeeded["output__result__score"] == 0.95
 
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_error_captured(self, mock_boto3):
         _setup_mocks(mock_boto3)
 
@@ -116,7 +116,7 @@ class TestReadExecutions:
         assert failed["error"] == "TaskFailed"
         assert failed["cause"] == "timeout"
 
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_filter_fn(self, mock_boto3):
         _setup_mocks(mock_boto3)
 
@@ -127,7 +127,7 @@ class TestReadExecutions:
 
         assert len(df) == 1
 
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_max_executions(self, mock_boto3):
         _setup_mocks(mock_boto3)
 
@@ -140,7 +140,7 @@ class TestReadExecutions:
 
 
 class TestReadExecutionHistory:
-    @patch("jsonflat.integrations.stepfunctions.boto3")
+    @patch("jsonflat.integrations.aws.stepfunctions.boto3")
     def test_basic(self, mock_boto3):
         session = MagicMock()
         mock_boto3.Session.return_value = session

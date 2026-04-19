@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.dynamodb import read_dynamodb
+from jsonflat.integrations.aws.dynamodb import read_dynamodb
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -21,7 +21,7 @@ ITEMS = [
 # Tests
 # ---------------------------------------------------------------------------
 class TestReadDynamodb:
-    @patch("jsonflat.integrations.dynamodb.boto3")
+    @patch("jsonflat.integrations.aws.dynamodb.boto3")
     def test_basic_scan(self, mock_boto3):
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
@@ -34,7 +34,7 @@ class TestReadDynamodb:
         assert len(df) == 3
         assert "customer__name" in df.columns
 
-    @patch("jsonflat.integrations.dynamodb.boto3")
+    @patch("jsonflat.integrations.aws.dynamodb.boto3")
     def test_pagination(self, mock_boto3):
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
@@ -48,7 +48,7 @@ class TestReadDynamodb:
         assert len(df) == 3
         assert table.scan.call_count == 2
 
-    @patch("jsonflat.integrations.dynamodb.boto3")
+    @patch("jsonflat.integrations.aws.dynamodb.boto3")
     def test_max_items(self, mock_boto3):
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
@@ -58,7 +58,7 @@ class TestReadDynamodb:
         df = read_dynamodb(table_name="t", max_items=2)
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.dynamodb.boto3")
+    @patch("jsonflat.integrations.aws.dynamodb.boto3")
     def test_filter_fn(self, mock_boto3):
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
@@ -71,7 +71,7 @@ class TestReadDynamodb:
         )
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.dynamodb.boto3")
+    @patch("jsonflat.integrations.aws.dynamodb.boto3")
     def test_empty_table(self, mock_boto3):
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table

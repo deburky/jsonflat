@@ -2,7 +2,7 @@
 Bedrock integration for jsonflat -- flatten conversation histories and model responses.
 
 Usage:
-    from jsonflat.integrations.bedrock import flatten_response, flatten_conversations
+    from jsonflat.aws.bedrock import flatten_response, flatten_conversations
 
     # Flatten a single Bedrock converse() response
     response = bedrock.converse(modelId="...", messages=[...])

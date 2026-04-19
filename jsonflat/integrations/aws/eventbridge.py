@@ -1,7 +1,7 @@
 """EventBridge integration for jsonflat.
 
 Usage:
-    from jsonflat.integrations.eventbridge import read_events, flatten_event
+    from jsonflat.aws.eventbridge import read_events, flatten_event
 
     # Flatten a single EventBridge event
     flat = flatten_event(event)

@@ -2,7 +2,7 @@
 S3 integration for jsonflat -- sync and async readers for JSON files.
 
 Usage:
-    from jsonflat.integrations.s3 import read_s3
+    from jsonflat.aws.s3 import read_s3
 
     df = read_s3(
         bucket="my-bucket",
@@ -12,7 +12,7 @@ Usage:
     )
 
     # Async streaming
-    from jsonflat.integrations.s3 import read_s3_async
+    from jsonflat.aws.s3 import read_s3_async
 
     async for df_batch in read_s3_async(
         bucket="my-bucket",

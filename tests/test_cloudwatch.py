@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.cloudwatch import read_logs
+from jsonflat.integrations.aws.cloudwatch import read_logs
 
 
 def _make_event(message: str, stream: str = "stream-1", ts: int = 1000):
@@ -40,7 +40,7 @@ def _setup_mocks(mock_boto3, events):
 
 
 class TestReadLogs:
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_basic_read(self, mock_boto3):
         _setup_mocks(mock_boto3, LOG_EVENTS)
 
@@ -51,7 +51,7 @@ class TestReadLogs:
         assert "_log_stream" in df.columns
         assert "_timestamp" in df.columns
 
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_json_parsed(self, mock_boto3):
         _setup_mocks(mock_boto3, LOG_EVENTS[:1])
 
@@ -61,7 +61,7 @@ class TestReadLogs:
         assert df.iloc[0]["msg"] == "started"
         assert df.iloc[0]["req__id"] == "r1"
 
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_plain_text_fallback(self, mock_boto3):
         _setup_mocks(mock_boto3, [LOG_EVENTS[2]])
 
@@ -69,7 +69,7 @@ class TestReadLogs:
 
         assert df.iloc[0]["_raw_message"] == "plain text log line"
 
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_max_events(self, mock_boto3):
         _setup_mocks(mock_boto3, LOG_EVENTS)
 
@@ -77,7 +77,7 @@ class TestReadLogs:
 
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_filter_fn(self, mock_boto3):
         _setup_mocks(mock_boto3, LOG_EVENTS)
 
@@ -89,7 +89,7 @@ class TestReadLogs:
         assert len(df) == 1
         assert df.iloc[0]["msg"] == "failed"
 
-    @patch("jsonflat.integrations.cloudwatch.boto3")
+    @patch("jsonflat.integrations.aws.cloudwatch.boto3")
     def test_empty_logs(self, mock_boto3):
         _setup_mocks(mock_boto3, [])
 
