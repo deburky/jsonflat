@@ -14,13 +14,21 @@ from __future__ import annotations
 import asyncio
 import functools
 import warnings
-from typing import Any, Literal, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 
 def aio(
-    workers: int = 32, pool=None, service: str | None = None, profile: str | None = None, region: str | None = None
-):
-    """Decorator that runs an async function over a list concurrently.
+    workers: int = 32,
+    pool: Callable[[], Any] | None = None,
+    service: str | None = None,
+    profile: str | None = None,
+    region: str | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., list[Any]]]:
+    """Run an async function over a list concurrently.
 
     :param workers: max concurrent coroutines / connection pool size
     :param pool: async context manager factory, opened once and injected as second arg
@@ -48,16 +56,16 @@ def aio(
         _svc = cast(Literal["s3"], service)
         pool = lambda: _session.client(_svc, config=Config(max_pool_connections=workers))  # noqa: E731
 
-    def decorator(fn):
+    def decorator(fn: Callable[..., Any]) -> Callable[..., list[Any]]:
         @functools.wraps(fn)
-        def wrapper(items, *args, **kwargs):
-            async def run():
+        def wrapper(items: list[Any], *args: Any, **kwargs: Any) -> list[Any]:
+            async def run() -> list[Any]:
                 if pool is not None:
                     async with pool() as client:
                         return list(await asyncio.gather(*[fn(item, client, *args, **kwargs) for item in items]))
                 sem = asyncio.Semaphore(workers)
 
-                async def call(item):
+                async def call(item: Any) -> Any:
                     async with sem:
                         return await fn(item, *args, **kwargs)
 
@@ -99,12 +107,12 @@ def flatten(
 
 
 def normalize_json(
-    data: dict[str, Any] | list[dict[str, Any]],
+    data: dict[str, Any] | list[dict[str, Any]] | Any,
     max_nesting: int | None = 3,
     root_name: str = "main",
     separator: str = ".",
     key: str | None = None,
-    hoist: list[str] | None = None,
+    hoist: list[str | tuple[str, str]] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Normalize JSON into parent + child tables.
 
@@ -187,7 +195,7 @@ def to_dataframe(
     data: dict[str, Any] | list[dict[str, Any]],
     max_nesting: int | None = 3,
     table: str = "main",
-):
+) -> pd.DataFrame:
     """Flatten JSON directly to a pandas DataFrame.
 
     :param data: single record or list of records

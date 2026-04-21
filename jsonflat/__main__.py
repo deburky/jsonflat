@@ -9,7 +9,7 @@ import sys
 from jsonflat.core import normalize_json
 
 
-def main():
+def main() -> None:
     """Flatten nested JSON from file or stdin and print table summaries."""
     parser = argparse.ArgumentParser(description="Flatten nested JSON")
     parser.add_argument("file", nargs="?", help="JSON file (stdin if omitted)")
@@ -31,7 +31,7 @@ def main():
             for k in sorted(rows[0].keys()):
                 v = rows[0][k]
                 vstr = str(v)[:60]
-                print(f"  {k}: ({type(v).__name__}) {vstr}")
+                print(f"{k}: ({type(v).__name__}) {vstr}")
 
 
 if __name__ == "__main__":

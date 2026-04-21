@@ -1,3 +1,4 @@
+"""Tests for DynamoDB table scan via read_dynamodb."""
 from __future__ import annotations
 
 from decimal import Decimal
@@ -5,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.aws.dynamodb import read_dynamodb
+from jsonflat.aws.dynamodb import read_dynamodb
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -21,8 +22,11 @@ ITEMS = [
 # Tests
 # ---------------------------------------------------------------------------
 class TestReadDynamodb:
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_basic_scan(self, mock_boto3):
+    """Tests for read_dynamodb()."""
+
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_basic_scan(self, mock_boto3) -> None:
+        """Scans a table and returns a DataFrame with flattened columns."""
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
@@ -34,8 +38,9 @@ class TestReadDynamodb:
         assert len(df) == 3
         assert "customer__name" in df.columns
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_pagination(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_pagination(self, mock_boto3) -> None:
+        """Follows LastEvaluatedKey to collect all pages."""
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
@@ -48,8 +53,9 @@ class TestReadDynamodb:
         assert len(df) == 3
         assert table.scan.call_count == 2
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_max_items(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_max_items(self, mock_boto3) -> None:
+        """Stops after max_items records regardless of remaining pages."""
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
@@ -58,8 +64,9 @@ class TestReadDynamodb:
         df = read_dynamodb(table_name="t", max_items=2)
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_filter_fn(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_filter_fn(self, mock_boto3) -> None:
+        """filter_fn excludes items before they are added to the result."""
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
@@ -71,8 +78,9 @@ class TestReadDynamodb:
         )
         assert len(df) == 2
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_empty_table(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_empty_table(self, mock_boto3) -> None:
+        """Empty table returns an empty DataFrame."""
         table = MagicMock()
         mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 

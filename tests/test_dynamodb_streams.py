@@ -1,3 +1,4 @@
+"""Tests for DynamoDB stream consumption via read_stream and stream_records."""
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -5,13 +6,15 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from jsonflat.integrations.aws.dynamodb import read_stream, stream_records
+from jsonflat.aws.dynamodb import read_stream, stream_records
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-def _make_stream_record(event_id: str, event_name: str, new_image: dict | None = None, old_image: dict | None = None):
+def _make_stream_record(
+    event_id: str, event_name: str, new_image: dict | None = None, old_image: dict | None = None
+) -> dict:
     dynamodb = {}
     if new_image:
         dynamodb["NewImage"] = new_image
@@ -49,7 +52,7 @@ STREAM_RECORDS = [
 ]
 
 
-def _setup_mocks(mock_boto3, records):
+def _setup_mocks(mock_boto3: MagicMock, records: list) -> tuple[MagicMock, MagicMock]:
     """Wire up mock DynamoDB and Streams clients."""
     session = MagicMock()
     mock_boto3.Session.return_value = session
@@ -58,9 +61,7 @@ def _setup_mocks(mock_boto3, records):
     streams = MagicMock()
 
     def client_factory(service, **kwargs):
-        if service == "dynamodb":
-            return ddb
-        return streams
+        return ddb if service == "dynamodb" else streams
 
     session.client.side_effect = client_factory
 
@@ -86,40 +87,43 @@ def _setup_mocks(mock_boto3, records):
 # Tests
 # ---------------------------------------------------------------------------
 class TestReadStream:
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_new_images(self, mock_boto3):
+    """Tests for read_stream()."""
+
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_new_images(self, mock_boto3) -> None:
+        """Returns only new images; INSERT and MODIFY have NewImage, REMOVE does not."""
         _setup_mocks(mock_boto3, STREAM_RECORDS)
 
         df = read_stream(table_name="t", max_nesting=2, image="new")
 
         assert isinstance(df, pd.DataFrame)
-        # INSERT has NewImage, MODIFY has NewImage, REMOVE has no NewImage
         assert len(df) == 2
         assert "_event_name" in df.columns
         assert list(df["_event_name"]) == ["INSERT", "MODIFY"]
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_old_images(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_old_images(self, mock_boto3) -> None:
+        """Returns only old images; MODIFY and REMOVE have OldImage, INSERT does not."""
         _setup_mocks(mock_boto3, STREAM_RECORDS)
 
         df = read_stream(table_name="t", max_nesting=2, image="old")
 
-        # MODIFY has OldImage, REMOVE has OldImage, INSERT has no OldImage
         assert len(df) == 2
         assert list(df["_event_name"]) == ["MODIFY", "REMOVE"]
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_both_images(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_both_images(self, mock_boto3) -> None:
+        """Returns both images; INSERT=1, MODIFY=2, REMOVE=1 → 4 total rows."""
         _setup_mocks(mock_boto3, STREAM_RECORDS)
 
         df = read_stream(table_name="t", max_nesting=2, image="both")
 
-        # INSERT: 1 new, MODIFY: 1 new + 1 old, REMOVE: 1 old = 4
         assert len(df) == 4
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_unmarshalling(self, mock_boto3):
-        _setup_mocks(mock_boto3, STREAM_RECORDS[:1])  # Just INSERT
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_unmarshalling(self, mock_boto3) -> None:
+        """Typed values are unmarshalled from DynamoDB format to Python before flattening."""
+        _setup_mocks(mock_boto3, STREAM_RECORDS[:1])
 
         df = read_stream(table_name="t", max_nesting=2, image="new")
 
@@ -127,8 +131,9 @@ class TestReadStream:
         assert df.iloc[0]["customer__name"] == "Alice"
         assert df.iloc[0]["customer__age"] == 30
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_filter_fn(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_filter_fn(self, mock_boto3) -> None:
+        """filter_fn is applied to each image dict before flattening."""
         _setup_mocks(mock_boto3, STREAM_RECORDS)
 
         df = read_stream(
@@ -138,8 +143,9 @@ class TestReadStream:
         )
         assert len(df) == 1
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_no_stream_raises(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_no_stream_raises(self, mock_boto3) -> None:
+        """Raises ValueError when the table has no stream enabled."""
         session = MagicMock()
         mock_boto3.Session.return_value = session
 
@@ -150,8 +156,9 @@ class TestReadStream:
         with pytest.raises(ValueError, match="No stream enabled"):
             read_stream(table_name="t")
 
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_empty_stream(self, mock_boto3):
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_empty_stream(self, mock_boto3) -> None:
+        """Empty stream returns an empty DataFrame."""
         _setup_mocks(mock_boto3, [])
 
         df = read_stream(table_name="t", image="new")
@@ -160,11 +167,14 @@ class TestReadStream:
 
 
 class TestStreamRecords:
-    @patch("jsonflat.integrations.aws.dynamodb.boto3")
-    def test_yields_batches(self, mock_boto3):
+    """Tests for stream_records()."""
+
+    @patch("jsonflat.aws.dynamodb.boto3")
+    def test_yields_batches(self, mock_boto3) -> None:
+        """Yields at least one DataFrame batch covering all matching records."""
         _setup_mocks(mock_boto3, STREAM_RECORDS)
 
         batches = list(stream_records(table_name="t", image="new"))
-        assert len(batches) >= 1
+        assert batches
         total = sum(len(b) for b in batches)
         assert total == 2

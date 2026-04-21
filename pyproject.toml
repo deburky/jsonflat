@@ -12,13 +12,8 @@ license = "MIT"
 
 [project.optional-dependencies]
 dataframe = ["pandas"]
-s3 = ["boto3", "orjson"]
 sqs = ["boto3"]
 dynamodb = ["boto3"]
-cloudwatch = ["boto3"]
-eventbridge = ["boto3"]
-stepfunctions = ["boto3"]
-s3-async = ["aioboto3", "orjson"]
 sklearn = ["pandas", "scikit-learn"]
 
 [project.scripts]

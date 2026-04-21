@@ -1,3 +1,4 @@
+"""Tests for SQS message consumption via read_sqs and stream_sqs."""
 from __future__ import annotations
 
 import json
@@ -5,13 +6,14 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
-from jsonflat.integrations.aws.sqs import read_sqs, stream_sqs
+from jsonflat.aws.sqs import read_sqs, stream_sqs
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 def _make_message(msg_id: str, body: dict) -> dict:
+    """Constructs a mock SQS message with JSON body."""
     return {
         "MessageId": msg_id,
         "ReceiptHandle": f"rh-{msg_id}",
@@ -30,8 +32,11 @@ RECORDS = [
 # Tests — read_sqs
 # ---------------------------------------------------------------------------
 class TestReadSqs:
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_basic_read(self, mock_boto3):
+    """Tests for read_sqs()."""
+
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_basic_read(self, mock_boto3) -> None:
+        """Polls queue and returns a flattened DataFrame with _message_id column."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -49,8 +54,9 @@ class TestReadSqs:
         assert "info__name" in df.columns
         assert "_message_id" in df.columns
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_max_messages_limits(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_max_messages_limits(self, mock_boto3) -> None:
+        """Stops consuming after max_messages regardless of queue depth."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -63,8 +69,9 @@ class TestReadSqs:
         df = read_sqs(queue_url="https://q", max_messages=5)
         assert len(df) == 5
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_filter_fn(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_filter_fn(self, mock_boto3) -> None:
+        """filter_fn excludes messages before flattening."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -85,8 +92,9 @@ class TestReadSqs:
         assert len(df) == 1
         assert df.iloc[0]["id"] == 1
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_empty_queue(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_empty_queue(self, mock_boto3) -> None:
+        """Empty queue returns an empty DataFrame."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -96,8 +104,9 @@ class TestReadSqs:
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 0
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_delete_called(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_delete_called(self, mock_boto3) -> None:
+        """delete=True calls delete_message_batch after receiving messages."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -111,8 +120,9 @@ class TestReadSqs:
         read_sqs(queue_url="https://q", delete=True)
         sqs.delete_message_batch.assert_called_once()
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_no_delete_when_disabled(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_no_delete_when_disabled(self, mock_boto3) -> None:
+        """delete=False leaves messages on the queue."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -131,8 +141,11 @@ class TestReadSqs:
 # Tests — stream_sqs
 # ---------------------------------------------------------------------------
 class TestStreamSqs:
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_batching(self, mock_boto3):
+    """Tests for stream_sqs()."""
+
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_batching(self, mock_boto3) -> None:
+        """Yields one DataFrame per receive_message call, respecting batch_size."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
@@ -149,8 +162,9 @@ class TestStreamSqs:
         assert len(batches[0]) == 5
         assert len(batches[1]) == 2
 
-    @patch("jsonflat.integrations.aws.sqs.boto3")
-    def test_malformed_json_skipped(self, mock_boto3):
+    @patch("jsonflat.aws.sqs.boto3")
+    def test_malformed_json_skipped(self, mock_boto3) -> None:
+        """Messages with non-JSON bodies are silently skipped."""
         sqs = MagicMock()
         mock_boto3.Session.return_value.client.return_value = sqs
 
