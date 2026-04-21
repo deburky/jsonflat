@@ -11,7 +11,6 @@ from sklearn.tree import DecisionTreeClassifier
 
 from jsonflat.sklearn import JsonFlattener
 
-
 RECORDS = [
     {"id": 1, "user": {"name": "Alice", "address": {"city": "NYC"}}, "score": 90},
     {"id": 2, "user": {"name": "Bob", "address": {"city": "SF"}}, "score": 60},

@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import importlib
-from unittest.mock import patch
-
 from importlib.metadata import PackageNotFoundError
+from unittest.mock import patch
 
 import jsonflat
 
