@@ -172,7 +172,8 @@ def normalize_json(
                                 f"({child_flat[key]!r} vs parent {parent_key_value!r})."
                             )
                         warnings.warn(
-                            f"Key '{key}' already exists in child table '{child_name}' with the same value — skipping overwrite.",
+                            f"Key '{key}' already exists in child table '{child_name}' "
+                            "with the same value (skipping overwrite).",
                             stacklevel=2,
                         )
                     else:
