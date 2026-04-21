@@ -37,7 +37,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install tools
-        run: pip install ruff mypy pandas-stubs boto3-stubs types-aioboto3
+        run: pip install ruff mypy pandas-stubs boto3-stubs types-aioboto3 scikit-learn-stubs types-orjson
 
       - name: Ruff check
         run: ruff check .
