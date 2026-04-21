@@ -46,9 +46,7 @@ def test_dataframe_with_dict_valued_column():
 def test_dataframe_without_column():
     """Without ``column=``, each DataFrame row is treated as a dict."""
     # Pre-flattened frame — treats each row as a dict
-    df = pd.DataFrame(
-        [{"id": 1, "city": "NYC"}, {"id": 2, "city": "SF"}, {"id": 3, "city": "LA"}]
-    )
+    df = pd.DataFrame([{"id": 1, "city": "NYC"}, {"id": 2, "city": "SF"}, {"id": 3, "city": "LA"}])
     out = JsonFlattener().fit_transform(df)
     assert len(out) == 3
     assert out["city"].tolist() == ["NYC", "SF", "LA"]

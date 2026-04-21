@@ -102,15 +102,11 @@ def flatten(
             for sk, sv in flatten(v, max_nesting, _depth + 1, (*_path, k)).items():
                 if sk in flat:
                     raise ValueError(
-                        f"Key collision on '{sk}': a native key contains '__' "
-                        "that conflicts with a nested path"
+                        f"Key collision on '{sk}': a native key contains '__' that conflicts with a nested path"
                     )
                 flat[sk] = sv
         elif key in flat:
-            raise ValueError(
-                f"Key collision on '{key}': a native key contains '__' "
-                "that conflicts with a nested path"
-            )
+            raise ValueError(f"Key collision on '{key}': a native key contains '__' that conflicts with a nested path")
         else:
             flat[key] = v
 
