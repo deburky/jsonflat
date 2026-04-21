@@ -1,4 +1,5 @@
 """Tests for key, hoist, aio, and pandas Series input — patterns from real usage."""
+
 from __future__ import annotations
 
 import asyncio
@@ -121,6 +122,7 @@ class TestAio:
 
     def test_no_pool_runs_concurrently(self) -> None:
         """Decorated async function runs over every item and returns results."""
+
         @aio(workers=4)
         async def double(x):
             return x * 2
@@ -129,6 +131,7 @@ class TestAio:
 
     def test_no_pool_preserves_order(self) -> None:
         """Results are returned in input order even when coroutines finish out of order."""
+
         @aio(workers=4)
         async def slow_first(x):
             if x == 0:
@@ -139,6 +142,7 @@ class TestAio:
 
     def test_with_pool_injects_client(self) -> None:
         """Pool context manager is opened once and injected as the second argument."""
+
         class FakeClient:
             async def compute(self, x):
                 return x + 10
@@ -158,6 +162,7 @@ class TestAio:
 
     def test_empty_list(self) -> None:
         """Empty input returns an empty list without error."""
+
         @aio(workers=4)
         async def noop(x):
             return x
@@ -179,10 +184,12 @@ class TestPandasSeriesInput:
 
     def test_series_with_child_tables(self) -> None:
         """A Series of nested dicts splits into main and child tables."""
-        series = pd.Series([
-            {"id": 1, "items": [{"x": 10}, {"x": 20}]},
-            {"id": 2, "items": [{"x": 30}]},
-        ])
+        series = pd.Series(
+            [
+                {"id": 1, "items": [{"x": 10}, {"x": 20}]},
+                {"id": 2, "items": [{"x": 30}]},
+            ]
+        )
         tables = normalize_json(series)
         assert len(tables["main"]) == 2
         assert len(tables["items"]) == 3

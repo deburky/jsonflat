@@ -1,4 +1,5 @@
 """Tests for DynamoDB table scan via read_dynamodb."""
+
 from __future__ import annotations
 
 from decimal import Decimal

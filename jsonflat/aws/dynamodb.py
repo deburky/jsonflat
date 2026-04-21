@@ -232,9 +232,7 @@ def _extract_images(
 
 def _unmarshall(item: dict[str, Any]) -> dict[str, Any]:
     """Convert DynamoDB JSON format to plain Python dicts."""
-    result: dict[str, Any] = {
-        key: _unmarshall_value(value) for key, value in item.items()
-    }
+    result: dict[str, Any] = {key: _unmarshall_value(value) for key, value in item.items()}
     return result
 
 

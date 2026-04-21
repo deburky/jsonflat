@@ -1,4 +1,5 @@
 """Tests for flatten, normalize_json, and to_dataframe core functions."""
+
 from __future__ import annotations
 
 import pytest

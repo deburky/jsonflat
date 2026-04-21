@@ -1,4 +1,5 @@
 """Tests for DynamoDB stream consumption via read_stream and stream_records."""
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch

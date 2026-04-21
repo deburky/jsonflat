@@ -1,4 +1,5 @@
 """Tests for SQS message consumption via read_sqs and stream_sqs."""
+
 from __future__ import annotations
 
 import json
