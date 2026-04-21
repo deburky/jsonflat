@@ -41,18 +41,14 @@ def read_dynamodb(
 ) -> pd.DataFrame:
     """Scan a DynamoDB table, flatten items, return a DataFrame.
 
-    Args:
-        table_name: DynamoDB table name.
-        max_nesting: flatten depth (None = unlimited).
-        max_items: stop after this many items (None = scan all).
-        filter_fn: optional filter applied to each item before flattening.
-        profile_name: AWS profile name (None = default).
-        region_name: AWS region (None = default).
-        **scan_kwargs: additional kwargs passed to table.scan()
-            (e.g. FilterExpression, ProjectionExpression).
-
-    Returns:
-        pandas DataFrame with flattened columns.
+    :param table_name: DynamoDB table name
+    :param max_nesting: flatten depth (None = unlimited)
+    :param max_items: stop after this many items (None = scan all)
+    :param filter_fn: optional filter applied to each item before flattening
+    :param profile_name: AWS profile name (None = default)
+    :param region_name: AWS region (None = default)
+    :param scan_kwargs: additional kwargs passed to ``table.scan()`` (e.g. FilterExpression)
+    :returns: pandas DataFrame with flattened columns
     """
     session = boto3.Session(profile_name=profile_name, region_name=region_name)
     table = session.resource("dynamodb").Table(table_name)
@@ -96,18 +92,15 @@ def read_stream(
 ) -> pd.DataFrame:
     """Read DynamoDB stream records, flatten, return a single DataFrame.
 
-    Args:
-        table_name: DynamoDB table name (stream ARN is resolved automatically).
-        max_nesting: flatten depth (None = unlimited).
-        max_records: stop after this many records (None = read all available).
-        image: which image to flatten — "new", "old", or "both".
-        iterator_type: TRIM_HORIZON (all) or LATEST (new only).
-        filter_fn: optional filter applied to the image dict before flattening.
-        profile_name: AWS profile name (None = default).
-        region_name: AWS region (None = default).
-
-    Returns:
-        pandas DataFrame with flattened columns.
+    :param table_name: DynamoDB table name (stream ARN is resolved automatically)
+    :param max_nesting: flatten depth (None = unlimited)
+    :param max_records: stop after this many records (None = read all available)
+    :param image: which image to flatten — ``"new"``, ``"old"``, or ``"both"``
+    :param iterator_type: ``TRIM_HORIZON`` (all) or ``LATEST`` (new only)
+    :param filter_fn: optional filter applied to the image dict before flattening
+    :param profile_name: AWS profile name (None = default)
+    :param region_name: AWS region (None = default)
+    :returns: pandas DataFrame with flattened columns
     """
     batches = []
     for df_batch in stream_records(
@@ -139,18 +132,15 @@ def stream_records(
 ) -> Iterator[pd.DataFrame]:
     """Yield DataFrames from DynamoDB stream shards.
 
-    Args:
-        table_name: DynamoDB table name.
-        max_nesting: flatten depth (None = unlimited).
-        max_records: stop after this many records (None = read all available).
-        image: which image to flatten — "new", "old", or "both".
-        iterator_type: TRIM_HORIZON or LATEST.
-        filter_fn: optional filter on image dict before flattening.
-        profile_name: AWS profile name (None = default).
-        region_name: AWS region (None = default).
-
-    Yields:
-        pandas DataFrame per shard with flattened columns.
+    :param table_name: DynamoDB table name
+    :param max_nesting: flatten depth (None = unlimited)
+    :param max_records: stop after this many records (None = read all available)
+    :param image: which image to flatten — ``"new"``, ``"old"``, or ``"both"``
+    :param iterator_type: ``TRIM_HORIZON`` or ``LATEST``
+    :param filter_fn: optional filter on image dict before flattening
+    :param profile_name: AWS profile name (None = default)
+    :param region_name: AWS region (None = default)
+    :yields: pandas DataFrame per shard with flattened columns
     """
     session = boto3.Session(profile_name=profile_name, region_name=region_name)
     ddb = session.client("dynamodb")

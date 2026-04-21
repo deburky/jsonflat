@@ -45,17 +45,14 @@ def read_sqs(
 ) -> pd.DataFrame:
     """Poll SQS, flatten JSON messages, return a single DataFrame.
 
-    Args:
-        queue_url: SQS queue URL.
-        max_messages: max number of messages to consume.
-        max_nesting: flatten depth (None = unlimited).
-        wait_time: long-poll wait time in seconds (0-20).
-        filter_fn: optional filter applied to parsed message before flattening.
-        profile_name: AWS profile name (None = default).
-        delete: whether to delete messages after processing.
-
-    Returns:
-        pandas DataFrame with flattened columns.
+    :param queue_url: SQS queue URL
+    :param max_messages: max number of messages to consume
+    :param max_nesting: flatten depth (None = unlimited)
+    :param wait_time: long-poll wait time in seconds (0-20)
+    :param filter_fn: optional filter applied to parsed message before flattening
+    :param profile_name: AWS profile name (None = default)
+    :param delete: whether to delete messages after processing
+    :returns: pandas DataFrame with flattened columns
     """
     records = []
     for batch_df in stream_sqs(
@@ -87,18 +84,15 @@ def stream_sqs(
 ) -> Iterator[pd.DataFrame]:
     """Stream SQS messages as DataFrame batches.
 
-    Args:
-        queue_url: SQS queue URL.
-        batch_size: messages per yielded DataFrame (max 10, SQS limit).
-        max_messages: stop after this many messages (None = drain queue).
-        max_nesting: flatten depth (None = unlimited).
-        wait_time: long-poll wait time in seconds (0-20).
-        filter_fn: optional filter applied to parsed message before flattening.
-        profile_name: AWS profile name (None = default).
-        delete: whether to delete messages after processing.
-
-    Yields:
-        pandas DataFrame with flattened columns, one per batch.
+    :param queue_url: SQS queue URL
+    :param batch_size: messages per yielded DataFrame (max 10, SQS limit)
+    :param max_messages: stop after this many messages (None = drain queue)
+    :param max_nesting: flatten depth (None = unlimited)
+    :param wait_time: long-poll wait time in seconds (0-20)
+    :param filter_fn: optional filter applied to parsed message before flattening
+    :param profile_name: AWS profile name (None = default)
+    :param delete: whether to delete messages after processing
+    :yields: pandas DataFrame with flattened columns, one per batch
     """
     session = boto3.Session(profile_name=profile_name)
     sqs = session.client("sqs")

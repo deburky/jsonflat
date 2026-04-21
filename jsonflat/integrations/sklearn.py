@@ -31,11 +31,10 @@ from jsonflat.core import normalize_json
 class JsonFlattener(BaseEstimator, TransformerMixin):
     """Flatten nested JSON records into a DataFrame for use in sklearn pipelines.
 
-    Parameters:
-        max_nesting: Max depth before storing as JSON blob (None = unlimited).
-        column: When input is a DataFrame, the column containing nested
-            dicts or JSON strings. If None, treats each row as a dict.
-        table: Which table to return from normalize_json (default: "main").
+    :param max_nesting: max depth before storing as JSON blob (None = unlimited)
+    :param column: when input is a DataFrame, the column containing nested dicts or JSON strings;
+                   if None, treats each row as a dict
+    :param table: which table to return from normalize_json (default: ``"main"``)
     """
 
     def __init__(
@@ -63,13 +62,9 @@ class JsonFlattener(BaseEstimator, TransformerMixin):
     ) -> pd.DataFrame:
         """Flatten nested JSON records into a DataFrame.
 
-        Args:
-            X: List of dicts, or a DataFrame. If a DataFrame and ``column``
-               is set, that column is used as the source of nested records.
-               If ``column`` is None, each row is converted to a dict.
-
-        Returns:
-            DataFrame with flattened columns.
+        :param X: list of dicts or a DataFrame; if a DataFrame and ``column`` is set,
+                  that column is used as the source of nested records
+        :returns: DataFrame with flattened columns
         """
         records = self._extract_records(X)
         tables = normalize_json(records, max_nesting=self.max_nesting)

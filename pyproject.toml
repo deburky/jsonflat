@@ -39,3 +39,15 @@ select = ["E", "F", "I", "UP"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
+
+[dependency-groups]
+dev = [
+    "boto3-stubs>=1.42.92",
+    "mypy>=1.20.1",
+    "pandas>=2.3.3",
+    "pandas-stubs>=2.3.3.260113",
+    "pytest>=9.0.3",
+    "scikit-learn-stubs>=0.0.3",
+    "types-aioboto3>=15.5.0",
+    "types-orjson>=3.6.2",
+]
