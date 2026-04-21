@@ -99,11 +99,49 @@ def flatten(
         key = "__".join((*_path, k)) if _path else k
 
         if isinstance(v, dict) and not stop:
-            flat |= flatten(v, max_nesting, _depth + 1, (*_path, k))
+            for sk, sv in flatten(v, max_nesting, _depth + 1, (*_path, k)).items():
+                if sk in flat:
+                    raise ValueError(
+                        f"Key collision on '{sk}': a native key contains '__' "
+                        "that conflicts with a nested path"
+                    )
+                flat[sk] = sv
+        elif key in flat:
+            raise ValueError(
+                f"Key collision on '{key}': a native key contains '__' "
+                "that conflicts with a nested path"
+            )
         else:
             flat[key] = v
 
     return flat
+
+
+def unflatten(row: dict[str, Any], separator: str = "__") -> dict[str, Any]:
+    """Reconstruct a nested dict from a flat dict produced by ``flatten``.
+
+    :param row: flat dict whose keys may contain ``separator`` segments
+    :param separator: separator used by ``flatten`` (default ``"__"``)
+    :returns: nested dict
+    :raises ValueError: when the same path is used both as a leaf and as a parent
+                        (e.g. ``{"a": 1, "a__b": 2}``)
+    """
+    out: dict[str, Any] = {}
+    for key, value in row.items():
+        parts = key.split(separator)
+        cursor = out
+        for part in parts[:-1]:
+            existing = cursor.get(part)
+            if existing is None:
+                cursor[part] = {}
+            elif not isinstance(existing, dict):
+                raise ValueError(f"Conflicting key: '{part}' is both a leaf and a parent in '{key}'")
+            cursor = cursor[part]
+        leaf = parts[-1]
+        if leaf in cursor and isinstance(cursor[leaf], dict):
+            raise ValueError(f"Conflicting key: '{leaf}' is both a leaf and a parent in '{key}'")
+        cursor[leaf] = value
+    return out
 
 
 def normalize_json(

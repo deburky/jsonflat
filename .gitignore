@@ -11,3 +11,7 @@ build/
 .pytest_cache/
 .ruff_cache/
 uv.lock
+.vscode/
+.DS_Store
+.coverage
+

@@ -39,7 +39,7 @@ def read_sqs(
     max_messages: int = 100,
     max_nesting: int | None = 3,
     wait_time: int = 5,
-    filter_fn: Callable[[dict], bool] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     profile_name: str | None = None,
     delete: bool = True,
 ) -> pd.DataFrame:
@@ -78,7 +78,7 @@ def stream_sqs(
     max_messages: int | None = None,
     max_nesting: int | None = 3,
     wait_time: int = 5,
-    filter_fn: Callable[[dict], bool] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     profile_name: str | None = None,
     delete: bool = True,
 ) -> Iterator[pd.DataFrame]:

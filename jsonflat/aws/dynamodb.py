@@ -34,7 +34,7 @@ def read_dynamodb(
     table_name: str,
     max_nesting: int | None = 3,
     max_items: int | None = None,
-    filter_fn: Callable[[dict], bool] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     profile_name: str | None = None,
     region_name: str | None = None,
     **scan_kwargs: Any,
@@ -86,7 +86,7 @@ def read_stream(
     max_records: int | None = None,
     image: str = "new",
     iterator_type: str = "TRIM_HORIZON",
-    filter_fn: Callable[[dict], bool] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     profile_name: str | None = None,
     region_name: str | None = None,
 ) -> pd.DataFrame:
@@ -126,7 +126,7 @@ def stream_records(
     max_records: int | None = None,
     image: str = "new",
     iterator_type: str = "TRIM_HORIZON",
-    filter_fn: Callable[[dict], bool] | None = None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None = None,
     profile_name: str | None = None,
     region_name: str | None = None,
 ) -> Iterator[pd.DataFrame]:
@@ -190,7 +190,7 @@ def _process_records(
     records: list[dict[str, Any]],
     image: str,
     max_nesting: int | None,
-    filter_fn: Callable[[dict], bool] | None,
+    filter_fn: Callable[[dict[str, Any]], bool] | None,
 ) -> list[dict[str, Any]]:
     """Extract and flatten images from stream records."""
     rows: list[dict[str, Any]] = []

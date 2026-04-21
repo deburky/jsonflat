@@ -49,6 +49,23 @@ flatten(data, max_nesting=1)     # {'a__b': {'c': {'d': 1}}}
 flatten(data, max_nesting=None)  # {'a__b__c__d': 1}
 ```
 
+### Unflatten
+
+`unflatten(row)` reconstructs a nested dict from a flat dict — the dual of `flatten`. Use when round-tripping through columnar storage (parquet, CSV, DataFrame columns with `__` separators) back to nested JSON.
+
+```python
+from jsonflat import flatten, unflatten
+
+data = {"user": {"name": "Alice", "address": {"city": "NYC"}}, "amount": 42.5}
+
+flat = flatten(data, max_nesting=None)
+# {'user__name': 'Alice', 'user__address__city': 'NYC', 'amount': 42.5}
+
+unflatten(flat) == data  # True
+```
+
+Pass `separator="."` to unflatten keys that use a different delimiter. Conflicting paths (a key used both as a leaf and as a parent, e.g. `{"a": 1, "a__b": 2}`) raise `ValueError`.
+
 ### Normalize JSON
 
 `normalize_json(data)` is the main workhorse. It takes a record or list of records and returns a dict of tables: `main` for scalar fields, plus one child table per list-of-dicts it finds. Use when your JSON has arrays (transactions, documents, accounts) that need to become separate DataFrames.
@@ -234,22 +251,6 @@ pipe.fit(records, [1, 0])
 
 Accepts list of dicts or a DataFrame with a JSON column (`column="payload"`).
 
-### Lambda
-
-AWS Lambda handler that flattens JSON from S3 and writes parquet back.
-Supports S3 event triggers and direct invocation.
-
-```python
-# Entry point: jsonflat.aws.lambda_handler.handler
-
-import boto3
-lambda_client = boto3.client("lambda")
-lambda_client.invoke(
-    FunctionName="jsonflat",
-    Payload='{"bucket": "my-bucket", "prefix": "events/", "max_nesting": 3}',
-)
-```
-
 ### ibis / DuckDB
 
 jsonflat pairs well with ibis for SQL queries on flattened JSON.
@@ -276,16 +277,13 @@ jsonflat/
 │   ├── __init__.py              # re-exports flatten, normalize_json, to_dataframe, aio
 │   ├── core.py                  # flatten, normalize_json, to_dataframe, aio
 │   ├── __main__.py              # CLI entry point
-│   ├── aws/                     # short import aliases (from jsonflat.aws.sqs import ...)
-│   ├── sklearn.py               # short import alias (from jsonflat.sklearn import ...)
-│   └── integrations/
-│       ├── sklearn.py           # scikit-learn transformer
-│       └── aws/
-│           ├── sqs.py           # SQS consumer
-│           ├── dynamodb.py      # DynamoDB scan + streams
-│           └── lambda_handler.py # AWS Lambda handler
+│   ├── sklearn.py               # scikit-learn transformer (from jsonflat.sklearn import JsonFlattener)
+│   └── aws/
+│       ├── sqs.py               # SQS consumer
+│       └── dynamodb.py          # DynamoDB scan + streams
 └── tests/
     ├── test_jsonflat.py         # core tests
+    ├── test_advanced.py         # advanced / edge-case tests
     ├── test_sqs.py              # SQS tests
     ├── test_dynamodb.py         # DynamoDB scan tests
     └── test_dynamodb_streams.py # DynamoDB streams tests

@@ -14,7 +14,7 @@ from jsonflat.aws.sqs import read_sqs, stream_sqs
 # Helpers
 # ---------------------------------------------------------------------------
 def _make_message(msg_id: str, body: dict) -> dict:
-    """Constructs a mock SQS message with JSON body."""
+    """Construct a mock SQS message with a JSON body."""
     return {
         "MessageId": msg_id,
         "ReceiptHandle": f"rh-{msg_id}",

@@ -6,7 +6,13 @@ repos:
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.15.0
+    rev: v1.20.2
     hooks:
       - id: mypy
-        additional_dependencies: [pandas-stubs, boto3-stubs, types-aioboto3]
+        args: [--strict]
+        additional_dependencies:
+          - pandas-stubs
+          - boto3-stubs
+          - types-aioboto3
+          - scikit-learn-stubs
+          - types-orjson

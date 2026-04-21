@@ -4,17 +4,42 @@ build-backend = "hatchling.build"
 
 [project]
 name = "jsonflat"
-version = "0.1.0"
+version = "0.0.1"
 description = "Flatten nested JSON into DataFrames with controlled depth."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Denis Burakov"}]
+keywords = ["json", "flatten", "dataframe", "pandas", "normalize", "nested", "aws"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/deburky/jsonflat"
+Repository = "https://github.com/deburky/jsonflat"
+Issues = "https://github.com/deburky/jsonflat/issues"
 
 [project.optional-dependencies]
 dataframe = ["pandas"]
 sqs = ["boto3"]
 dynamodb = ["boto3"]
 sklearn = ["pandas", "scikit-learn"]
+s3-async = ["aioboto3", "orjson"]
 
 [project.scripts]
 jsonflat = "jsonflat.__main__:main"
@@ -32,16 +57,28 @@ line-length = 120
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 
-[tool.pytest.ini_options]
-asyncio_mode = "strict"
+[tool.coverage.run]
+source = ["jsonflat"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+show_missing = true
+skip_covered = false
 
 [dependency-groups]
 dev = [
     "boto3-stubs>=1.42.92",
-    "mypy>=1.20.1",
+    "mypy==1.20.2",
     "pandas>=2.3.3",
     "pandas-stubs>=2.3.3.260113",
     "pytest>=9.0.3",
+    "pytest-cov>=6.0.0",
     "scikit-learn-stubs>=0.0.3",
     "types-aioboto3>=15.5.0",
     "types-orjson>=3.6.2",
