@@ -10,4 +10,3 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pandas-stubs, boto3-stubs, types-aioboto3]
-        args: [--ignore-missing-imports]
