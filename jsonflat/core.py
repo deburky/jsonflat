@@ -17,7 +17,9 @@ import warnings
 from typing import Any, Literal, cast
 
 
-def aio(workers: int = 32, pool=None, service: str | None = None, profile: str | None = None, region: str | None = None):
+def aio(
+    workers: int = 32, pool=None, service: str | None = None, profile: str | None = None, region: str | None = None
+):
     """Decorator that runs an async function over a list concurrently.
 
     :param workers: max concurrent coroutines / connection pool size
@@ -54,11 +56,15 @@ def aio(workers: int = 32, pool=None, service: str | None = None, profile: str |
                     async with pool() as client:
                         return list(await asyncio.gather(*[fn(item, client, *args, **kwargs) for item in items]))
                 sem = asyncio.Semaphore(workers)
+
                 async def call(item):
                     async with sem:
                         return await fn(item, *args, **kwargs)
+
                 return list(await asyncio.gather(*[call(item) for item in items]))
+
             return asyncio.run(run())
+
         return wrapper
 
     return decorator
