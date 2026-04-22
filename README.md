@@ -21,15 +21,15 @@ uv add "git+https://github.com/deburky/jsonflat.git[sklearn]"    # + scikit-lear
 
 ### Flatten
 
-`flatten(record)` — one dict in, one flat dict out. Use when you have a single record and want to inspect it or build your own DataFrame manually.
+`flatten(record)`: one dict in, one flat dict out. Use when you have a single record and want to inspect it or build your own DataFrame manually.
 
 ```python
 from jsonflat import flatten
 
-# Top level — bank statement transaction
+# Top level: bank statement transaction
 pd.DataFrame([flatten(json.loads(df_bs["transactions"].iloc[0]))])
 
-# No depth limit — all nesting resolved
+# No depth limit: all nesting resolved
 record_level_df = pd.DataFrame([flatten(client, max_nesting=None)])
 ```
 
@@ -51,7 +51,7 @@ flatten(data, max_nesting=None)  # {'a__b__c__d': 1}
 
 ### Unflatten
 
-`unflatten(row)` reconstructs a nested dict from a flat dict — the dual of `flatten`. Use when round-tripping through columnar storage (parquet, CSV, DataFrame columns with `__` separators) back to nested JSON.
+`unflatten(row)` reconstructs a nested dict from a flat dict: the dual of `flatten`. Use when round-tripping through columnar storage (parquet, CSV, DataFrame columns with `__` separators) back to nested JSON.
 
 ```python
 from jsonflat import flatten, unflatten
@@ -94,20 +94,20 @@ tables = normalize_json([client1, client2], key="client_id")
 # client_id is copied into every child row as a join key
 ```
 
-#### `hoist` — ID-keyed dicts
+#### `hoist`: ID-keyed dicts
 
-When a dict's keys are IDs (e.g. IDs), `hoist` promotes those IDs to a column instead of baking them into table names.
+When a dict's keys are IDs, `hoist` promotes those IDs to a column instead of baking them into table names.
 
 ```python
-# Without hoist — loan IDs bleed into table names:
-# tables["loans.LOAN_ID_1.details.items"]
+# Without hoist, loan IDs bleed into table names:
+# tables["loans.<loan_id>.details.items"]
 
-# With hoist — clean loan_id column:
+# With hoist, clean loan_id column:
 tables = normalize_json(records, hoist=[("loans", "loan_id")])
 # tables["loans.details.items"]
 # each row has a loan_id column
 
-# String shorthand — uses f"{prefix}_id" as the column name:
+# String shorthand, uses f"{prefix}_id" as the column name:
 tables = normalize_json(records, hoist=["loans"])
 # each row gets a loans_id column
 ```
@@ -123,7 +123,7 @@ tables = normalize_json(records, hoist=["loans"])
 > tables = normalize_json(data)
 > pd.DataFrame(tables["main"])
 >
-> # One step
+> # One step (table="main" is the default)
 > to_dataframe(data)
 > ```
 
@@ -134,9 +134,9 @@ df = to_dataframe(data, max_nesting=3)
 df_items = to_dataframe(data, max_nesting=3, table="items")
 ```
 
-### `@aio` — concurrent async I/O
+### `@aio`: concurrent async I/O
 
-`aio` is a decorator that runs an async function over a list of items concurrently. Pass `service="s3"` (and optionally `profile`, `region`) to get an `aioboto3` connection pool injected automatically — one shared pool for all calls, no per-call TLS overhead.
+`aio` is a decorator that runs an async function over a list of items concurrently. Pass `service="s3"` (and optionally `profile`, `region`) to get an `aioboto3` connection pool injected automatically: one shared pool for all calls, no per-call TLS overhead.
 
 ```python
 import orjson
@@ -165,7 +165,7 @@ async def fetch(key, s3):
     ...
 ```
 
-Or use without a pool for non-I/O async work — a semaphore limits concurrency:
+Or use without a pool for non-I/O async work, with a semaphore limiting concurrency:
 
 ```python
 @aio(workers=8)
