@@ -1,92 +1,100 @@
-"""Tests for DynamoDB table scan via read_dynamodb."""
+"""Unit tests for the DynamoDB decoder.
+
+DynamoDB's ``GetRecords`` / ``Scan`` responses encode values with type-marker
+dicts (``{"S": "..."}``, ``{"N": "42"}``, etc.). ``_unmarshall_value`` dispatches
+on the marker. These tests exercise every branch without needing real AWS or
+moto.
+"""
 
 from __future__ import annotations
 
-from decimal import Decimal
-from unittest.mock import MagicMock, patch
-
-import pandas as pd
-
-from jsonflat.aws.dynamodb import read_dynamodb
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-ITEMS = [
-    {"id": "order-001", "customer": {"name": "Alice", "age": Decimal("30")}, "status": "complete"},
-    {"id": "order-002", "customer": {"name": "Bob", "age": Decimal("25")}, "status": "pending"},
-    {"id": "order-003", "customer": {"name": "Carol", "age": Decimal("40")}, "status": "complete"},
-]
+from jsonflat.aws.dynamodb import _unmarshall_value, decode
 
 
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
-class TestReadDynamodb:
-    """Tests for read_dynamodb()."""
+def test_string() -> None:
+    """``S`` returns the raw string."""
+    assert _unmarshall_value({"S": "hello"}) == "hello"
 
-    @patch("jsonflat.aws.dynamodb.boto3")
-    def test_basic_scan(self, mock_boto3) -> None:
-        """Scans a table and returns a DataFrame with flattened columns."""
-        table = MagicMock()
-        mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
-        table.scan.return_value = {"Items": ITEMS}
+def test_integer_number() -> None:
+    """``N`` without a decimal point returns an int."""
+    assert _unmarshall_value({"N": "42"}) == 42
+    assert isinstance(_unmarshall_value({"N": "42"}), int)
 
-        df = read_dynamodb(table_name="t", max_nesting=2)
 
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) == 3
-        assert "customer__name" in df.columns
+def test_float_number() -> None:
+    """``N`` with a decimal point returns a float."""
+    assert _unmarshall_value({"N": "3.14"}) == 3.14
+    assert isinstance(_unmarshall_value({"N": "3.14"}), float)
 
-    @patch("jsonflat.aws.dynamodb.boto3")
-    def test_pagination(self, mock_boto3) -> None:
-        """Follows LastEvaluatedKey to collect all pages."""
-        table = MagicMock()
-        mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
-        table.scan.side_effect = [
-            {"Items": ITEMS[:2], "LastEvaluatedKey": {"id": "order-002"}},
-            {"Items": ITEMS[2:]},
-        ]
+def test_bool() -> None:
+    """``BOOL`` returns the Python bool."""
+    assert _unmarshall_value({"BOOL": True}) is True
+    assert _unmarshall_value({"BOOL": False}) is False
 
-        df = read_dynamodb(table_name="t", max_nesting=2)
-        assert len(df) == 3
-        assert table.scan.call_count == 2
 
-    @patch("jsonflat.aws.dynamodb.boto3")
-    def test_max_items(self, mock_boto3) -> None:
-        """Stops after max_items records regardless of remaining pages."""
-        table = MagicMock()
-        mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
+def test_null() -> None:
+    """``NULL`` returns None."""
+    assert _unmarshall_value({"NULL": True}) is None
 
-        table.scan.return_value = {"Items": ITEMS}
 
-        df = read_dynamodb(table_name="t", max_items=2)
-        assert len(df) == 2
+def test_list() -> None:
+    """``L`` returns a list with each element recursively unmarshalled."""
+    got = _unmarshall_value({"L": [{"S": "a"}, {"N": "1"}, {"BOOL": False}]})
+    assert got == ["a", 1, False]
 
-    @patch("jsonflat.aws.dynamodb.boto3")
-    def test_filter_fn(self, mock_boto3) -> None:
-        """filter_fn excludes items before they are added to the result."""
-        table = MagicMock()
-        mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
 
-        table.scan.return_value = {"Items": ITEMS}
+def test_map() -> None:
+    """``M`` returns a dict with each value recursively unmarshalled."""
+    got = _unmarshall_value({"M": {"x": {"S": "hi"}, "y": {"N": "2"}}})
+    assert got == {"x": "hi", "y": 2}
 
-        df = read_dynamodb(
-            table_name="t",
-            filter_fn=lambda item: item.get("status") == "complete",
-        )
-        assert len(df) == 2
 
-    @patch("jsonflat.aws.dynamodb.boto3")
-    def test_empty_table(self, mock_boto3) -> None:
-        """Empty table returns an empty DataFrame."""
-        table = MagicMock()
-        mock_boto3.Session.return_value.resource.return_value.Table.return_value = table
+def test_string_set() -> None:
+    """``SS`` returns a Python set of strings."""
+    assert _unmarshall_value({"SS": ["a", "b", "c"]}) == {"a", "b", "c"}
 
-        table.scan.return_value = {"Items": []}
 
-        df = read_dynamodb(table_name="t")
-        assert isinstance(df, pd.DataFrame)
-        assert len(df) == 0
+def test_number_set_integers() -> None:
+    """``NS`` with integer strings returns a set of ints."""
+    assert _unmarshall_value({"NS": ["1", "2", "3"]}) == {1, 2, 3}
+
+
+def test_number_set_mixed() -> None:
+    """``NS`` converts each element individually (int or float per-element)."""
+    got = _unmarshall_value({"NS": ["1", "2.5"]})
+    assert got == {1, 2.5}
+
+
+def test_binary() -> None:
+    """``B`` returns the raw bytes."""
+    assert _unmarshall_value({"B": b"\x01\x02"}) == b"\x01\x02"
+
+
+def test_binary_set() -> None:
+    """``BS`` returns a set of bytes."""
+    assert _unmarshall_value({"BS": [b"a", b"b"]}) == {b"a", b"b"}
+
+
+def test_unknown_marker_passthrough() -> None:
+    """An unknown marker returns the value dict as-is (defensive fallback)."""
+    assert _unmarshall_value({"WHAT": "???"}) == {"WHAT": "???"}
+
+
+def test_decode_full_item() -> None:
+    """``decode`` unwraps every field of a full DynamoDB item dict."""
+    item = {
+        "id": {"S": "A1"},
+        "qty": {"N": "3"},
+        "active": {"BOOL": True},
+        "tags": {"SS": ["x", "y"]},
+        "meta": {"M": {"created": {"S": "2026-04-21"}}},
+    }
+    assert decode(item) == {
+        "id": "A1",
+        "qty": 3,
+        "active": True,
+        "tags": {"x", "y"},
+        "meta": {"created": "2026-04-21"},
+    }

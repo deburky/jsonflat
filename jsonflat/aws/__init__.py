@@ -1,1 +1,1 @@
-"""AWS integrations for jsonflat."""
+"""AWS format decoders for jsonflat."""
