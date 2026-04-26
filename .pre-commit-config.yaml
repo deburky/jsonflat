@@ -16,3 +16,4 @@ repos:
           - types-aioboto3
           - scikit-learn-stubs
           - types-orjson
+          - pytest
