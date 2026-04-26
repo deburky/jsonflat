@@ -226,7 +226,7 @@ records = [
 pipe.fit(records, [1, 0])
 ```
 
-Accepts list of dicts or a DataFrame with a JSON column (`column="payload"`).
+Accepts a list of dicts or a DataFrame with a JSON column (`column="payload"`).
 
 #### Joining child tables
 
