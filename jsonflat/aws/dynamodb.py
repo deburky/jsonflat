@@ -24,11 +24,15 @@ def decode(item: dict[str, Any]) -> dict[str, Any]:
     :param item: DynamoDB item as returned by ``GetItem``, ``Scan``, or stream images
     :returns: plain Python dict with all DynamoDB type wrappers removed
     """
-    return {key: _unmarshall_value(value) for key, value in item.items()}
+    return {key: decode_value(value) for key, value in item.items()}
 
 
-def _unmarshall_value(value: dict[str, Any]) -> Any:
-    """Convert a single DynamoDB typed value to Python."""
+def decode_value(value: dict[str, Any]) -> Any:
+    """Convert a single DynamoDB typed value to its Python equivalent.
+
+    :param value: DynamoDB typed value dict, e.g. ``{"S": "hello"}`` or ``{"N": "42"}``
+    :returns: plain Python value with the type wrapper removed
+    """
     if "S" in value:
         return value["S"]
     if "N" in value:
@@ -39,7 +43,7 @@ def _unmarshall_value(value: dict[str, Any]) -> Any:
     if "NULL" in value:
         return None
     if "L" in value:
-        return [_unmarshall_value(v) for v in value["L"]]
+        return [decode_value(v) for v in value["L"]]
     if "M" in value:
         return decode(value["M"])
     if "SS" in value:
