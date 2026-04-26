@@ -36,8 +36,6 @@ Issues = "https://github.com/deburky/jsonflat/issues"
 
 [project.optional-dependencies]
 dataframe = ["pandas"]
-sqs = ["boto3"]
-dynamodb = ["boto3"]
 sklearn = ["pandas", "scikit-learn"]
 s3-async = ["aioboto3", "orjson"]
 

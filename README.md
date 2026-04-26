@@ -12,8 +12,6 @@
 uv add git+https://github.com/deburky/jsonflat.git        # core (stdlib only)
 uv add "git+https://github.com/deburky/jsonflat.git[dataframe]"  # + pandas
 uv add "git+https://github.com/deburky/jsonflat.git[s3-async]"   # + aioboto3/orjson for @aio with S3
-uv add "git+https://github.com/deburky/jsonflat.git[sqs]"        # + boto3 for SQS
-uv add "git+https://github.com/deburky/jsonflat.git[dynamodb]"   # + boto3 for DynamoDB
 uv add "git+https://github.com/deburky/jsonflat.git[sklearn]"    # + scikit-learn for pipelines
 ```
 
@@ -187,50 +185,29 @@ cat data.json | jsonflat --nesting 3
 
 ## Integrations
 
-### SQS
-
-Consume JSON messages from SQS, flatten, and return a DataFrame.
-
-```python
-from jsonflat.aws.sqs import read_sqs, stream_sqs
-
-# Poll and flatten up to 100 messages
-df = read_sqs(
-    queue_url="https://sqs.us-east-1.amazonaws.com/123/my-queue",
-    max_messages=100,
-    max_nesting=3,
-)
-
-# Stream as batches
-for df_batch in stream_sqs(
-    queue_url="https://sqs.us-east-1.amazonaws.com/123/my-queue",
-    batch_size=10,
-    max_nesting=3,
-):
-    process(df_batch)
-```
-
 ### DynamoDB
 
-Scan a DynamoDB table and consume DynamoDB Streams.
+`decode` converts a DynamoDB item (typed value dicts from `GetItem`, `Scan`, or stream images) to a plain Python dict, ready for `flatten()` or `normalize_json()`.
 
 ```python
-from jsonflat.aws.dynamodb import read_dynamodb, read_stream, stream_records
+from jsonflat.aws.dynamodb import decode
+from jsonflat import flatten, normalize_json
 
-# Scan table
-df = read_dynamodb(table_name="my-table", max_nesting=3)
+# Decode a single item
+item = {"id": {"S": "A1"}, "qty": {"N": "3"}, "active": {"BOOL": True}}
+flatten(decode(item))
+# {'id': 'A1', 'qty': 3, 'active': True}
 
-# Read stream (new images)
-df = read_stream(table_name="my-table", max_nesting=3, image="new")
-
-# Stream as batches, including old and new images
-for df_batch in stream_records(table_name="my-table", image="both"):
-    process(df_batch)
+# Decode a batch (e.g. from a Lambda event or Scan response)
+records = [decode(item) for item in response["Items"]]
+tables = normalize_json(records)
 ```
+
+For table scans and stream consumption, use Lambda event source mappings or AWS Glue — they handle pagination, checkpointing, and fan-out better than a library wrapper.
 
 ### Scikit-learn
 
-Use `JsonFlattener` as a preprocessing step in sklearn pipelines.
+`JsonFlattener` is a stateful sklearn transformer. `fit` learns the column schema from training data; `transform` reindexes to that schema, filling missing columns with `NaN` and dropping unseen ones — guaranteeing consistent shape across fit/transform splits.
 
 ```python
 from jsonflat.sklearn import JsonFlattener
@@ -249,7 +226,24 @@ records = [
 pipe.fit(records, [1, 0])
 ```
 
-Accepts list of dicts or a DataFrame with a JSON column (`column="payload"`).
+Accepts a list of dicts or a DataFrame with a JSON column (`column="payload"`).
+
+#### Joining child tables
+
+Use `join`, `on`, and `how` to merge child tables onto the spine in a single transformer step. Child columns are prefixed as `<child_name>__<col>` to avoid collisions.
+
+```python
+records = [
+    {"client_id": "C1", "name": "Alice", "transactions": [{"amount": 10.0}, {"amount": 20.0}]},
+    {"client_id": "C2", "name": "Bob",   "transactions": [{"amount": 5.0}]},
+]
+
+JsonFlattener(join=["transactions"], on="client_id").fit_transform(records)
+#    client_id   name  transactions__amount
+# 0        C1  Alice                  10.0
+# 1        C1  Alice                  20.0
+# 2        C2    Bob                   5.0
+```
 
 ### ibis / DuckDB
 
@@ -274,19 +268,13 @@ jsonflat/
 ├── pyproject.toml
 ├── README.md
 ├── jsonflat/
-│   ├── __init__.py              # re-exports flatten, normalize_json, to_dataframe, aio
-│   ├── core.py                  # flatten, normalize_json, to_dataframe, aio
-│   ├── __main__.py              # CLI entry point
-│   ├── sklearn.py               # scikit-learn transformer (from jsonflat.sklearn import JsonFlattener)
+│   ├── __init__.py      # re-exports flatten, normalize_json, to_dataframe, aio
+│   ├── core.py          # flatten, unflatten, normalize_json, to_dataframe, aio
+│   ├── __main__.py      # CLI entry point
+│   ├── sklearn.py       # JsonFlattener — stateful sklearn transformer
 │   └── aws/
-│       ├── sqs.py               # SQS consumer
-│       └── dynamodb.py          # DynamoDB scan + streams
+│       └── dynamodb.py  # decode — DynamoDB JSON → plain Python
 └── tests/
-    ├── test_jsonflat.py         # core tests
-    ├── test_advanced.py         # advanced / edge-case tests
-    ├── test_sqs.py              # SQS tests
-    ├── test_dynamodb.py         # DynamoDB scan tests
-    └── test_dynamodb_streams.py # DynamoDB streams tests
 ```
 
 ## Tests
