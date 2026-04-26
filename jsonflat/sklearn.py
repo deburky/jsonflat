@@ -80,8 +80,11 @@ class JsonFlattener(BaseEstimator, TransformerMixin):
         y: Any = None,
         **fit_params: Any,
     ) -> Any:
-        """Fit on ``X``, then transform ``X`` — shorthand for ``fit(X).transform(X)``."""
-        return self.fit(X, y).transform(X)
+        """Fit on ``X``, then transform ``X`` in a single pass."""
+        records = self._extract_records(X)
+        df = self._build(records)
+        self.columns_ = df.columns.tolist()
+        return df
 
     def transform(
         self,
