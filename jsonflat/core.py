@@ -27,6 +27,7 @@ def aio(
     service: str | None = None,
     profile: str | None = None,
     region: str | None = None,
+    read_timeout: int | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., list[Any]]]:
     """Run an async function over a list concurrently.
 
@@ -35,6 +36,7 @@ def aio(
     :param service: AWS service shortcut (e.g. ``"s3"``); builds an aioboto3 pool automatically
     :param profile: AWS profile (used with ``service``)
     :param region: AWS region (used with ``service``)
+    :param read_timeout: socket read timeout in seconds (used with ``service``); useful for large files
     :returns: decorator that replaces ``async fn(item)`` with ``fn(items) -> list``
 
     Usage::
@@ -54,7 +56,11 @@ def aio(
             raise ImportError("pip install aioboto3") from e
         _session = aioboto3.Session(profile_name=profile, region_name=region)
         _svc = cast(Literal["s3"], service)
-        pool = lambda: _session.client(_svc, config=Config(max_pool_connections=workers))  # noqa: E731
+        _config_kwargs: dict[str, Any] = {"max_pool_connections": workers}
+        if read_timeout is not None:
+            _config_kwargs["read_timeout"] = read_timeout
+        _config = Config(**_config_kwargs)
+        pool = lambda: _session.client(_svc, config=_config)  # noqa: E731
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., list[Any]]:
         @functools.wraps(fn)
